@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Feedback Portal</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h2>Select Role</h2>
+    <select id="role">
+      <option value="">--Select--</option>
+      <option value="Student">Student</option>
+      <option value="Admin">Admin</option>
+    </select>
+
+    <div id="student-form" class="hidden">
+      <h3>Student Feedback Form</h3>
+      <input type="text" id="name" placeholder="Name" required />
+      <input type="email" id="email" placeholder="Email" required />
+      <textarea id="feedback" placeholder="Enter your feedback"></textarea>
+      <button onclick="submitFeedback()">Submit</button>
+    </div>
+
+    <div id="admin-section" class="hidden">
+      <h3>All Feedback Submissions</h3>
+      <div id="feedback-list"></div>
+    </div>
+  </div>
+
+  <!-- ✅ JS SCRIPT placed at the bottom to avoid 'undefined' errors -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const roleSelect = document.getElementById('role');
+
+      roleSelect.addEventListener('change', handleRoleChange);
+
+      function handleRoleChange() {
+        const role = roleSelect.value;
+        document.getElementById('student-form').classList.add('hidden');
+        document.getElementById('admin-section').classList.add('hidden');
+
+        if (role === 'Student') {
+          document.getElementById('student-form').classList.remove('hidden');
+        } else if (role === 'Admin') {
+          fetch('http://localhost:3000/get-feedbacks')
+            .then(res => res.json())
+            .then(data => {
+              const container = document.getElementById('feedback-list');
+              container.innerHTML = '';
+              data.forEach(item => {
+                container.innerHTML += `
+                  <div class="feedback-item">
+                    <strong>Name:</strong> ${item.name}<br/>
+                    <strong>Email:</strong> ${item.email}<br/>
+                    <strong>Feedback:</strong> ${item.feedback}
+                  </div>
+                `;
+              });
+              document.getElementById('admin-section').classList.remove('hidden');
+            });
+        }
+      }
+
+      window.submitFeedback = function () {
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const feedback = document.getElementById('feedback').value;
+
+        fetch('http://localhost:3000/submit-feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, feedback })
+        })
+        .then(res => res.json())
+        .then(data => {
+          alert(data.message);
+          document.getElementById('name').value = '';
+          document.getElementById('email').value = '';
+          document.getElementById('feedback').value = '';
+        });
+      }
+    });
+  </script>
+</body>
+</html>
